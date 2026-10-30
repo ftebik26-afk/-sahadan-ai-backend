@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahadan AI Futbol Analiz</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;background:#080d16;color:#fff;
+font-family:Arial,sans-serif;padding:15px
+}
+.container{max-width:700px;margin:auto}
+header{
+text-align:center;padding:20px;
+border-bottom:2px solid #32d995;
+margin-bottom:20px
+}
+.logo{font-size:28px;font-weight:bold;color:#32d995}
+.subtitle{color:#9aa9bd;font-size:13px;margin-top:8px}
+.card{
+background:#111c2b;border:1px solid #26394d;
+border-radius:13px;padding:16px;margin-bottom:15px
+}
+h3{color:#32d995;margin-top:0}
+input{
+width:100%;padding:14px;margin:7px 0;
+border-radius:8px;border:1px solid #34485e;
+background:#091321;color:white;font-size:15px
+}
+button{
+width:100%;padding:15px;border:0;border-radius:9px;
+background:#20bd82;color:#06150f;
+font-size:16px;font-weight:bold;margin-top:10px
+}
+button:active{transform:scale(.98)}
+.secondary{background:#26394d;color:white}
+.result{
+background:#091522;border:1px solid #26394d;
+padding:12px;border-radius:9px;margin:9px 0
+}
+.value{color:#32d995;font-weight:bold;float:right}
+.muted{color:#91a1b5;font-size:12px}
+#results{display:none}
+#status{color:#ffc85c;margin-top:10px}
+.footer{text-align:center;color:#64758b;font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<div class="logo">⚽ SAHADAN AI</div>
+<div class="subtitle">PROFESYONEL FUTBOL MAÇ ANALİZ VE SİMÜLASYON</div>
+</header>
+
+<div class="card">
+<h3>⚽ MAÇ BİLGİLERİ</h3>
+<input id="home" placeholder="Ev sahibi takım">
+<input id="away" placeholder="Deplasman takımı">
+<input id="matchUrl" placeholder="Sahadan / NowGoal maç bağlantısı">
+<button onclick="analyze()">ANALİZ ET</button>
+<div id="status"></div>
+</div>
+
+<div class="card">
+<h3>📊 VERİ GİRİŞİ</h3>
+<p class="muted">Takımların istatistiklerini veya maç verilerini buraya yapıştırabilirsin.</p>
+<input id="homeStats" placeholder="Ev sahibi takım istatistikleri">
+<input id="awayStats" placeholder="Deplasman takım istatistikleri">
+<input id="odds" placeholder="MS 1 / X / 2 oranları">
+<input id="form" placeholder="Son maçlar ve form bilgileri">
+<input id="players" placeholder="Kadro, eksikler ve oyuncu bilgileri">
+</div>
+
+<div id="results" class="card">
+<h3>🧠 AI MAÇ ANALİZ SONUÇLARI</h3>
+<div class="result">Maç: <span id="match" class="value"></span></div>
+<div class="result">Maç Sonucu: <span id="ms" class="value"></span></div>
+<div class="result">İlk Yarı: <span id="ht" class="value"></span></div>
+<div class="result">İY / MS: <span id="htms" class="value"></span></div>
+<div class="result">Karşılıklı Gol: <span id="btts" class="value"></span></div>
+<div class="result">2.5 Gol: <span id="over" class="value"></span></div>
+<div class="result">Tahmini Skor: <span id="score" class="value"></span></div>
+<div class="result">Güven Seviyesi: <span id="confidence" class="value"></span></div>
+<p class="muted">Bu bölümdeki yerel tahminler örnek hesaplamadır; gerçek maç verisi veya AI doğrulaması değildir.</p>
+</div>
+
+<div class="card">
+<h3>🌐 VERİ KAYNAKLARI</h3>
+<button class="secondary" onclick="openSite('https://www.nowgoal.com/')">NOWGOAL</button>
+<button class="secondary" onclick="openSite('https://www.sahadan.com/')">SAHADAN</button>
+</div>
+
+<div class="footer">
+SAHADAN AI © 2026<br>
+İstatistiksel tahminler kesin sonuç garantisi vermez.
+</div>
+</div>
+
+<script>
+function openSite(url){
+window.open(url,'_blank');
+}
+
+function analyze(){
+const home=document.getElementById('home').value.trim();
+const away=document.getElementById('away').value.trim();
+
+if(!home || !away){
+alert('Lütfen iki takımın adını gir.');
+return;
+}
+
+document.getElementById('status').innerText='Maç bilgileri hazırlanıyor...';
+
+const hs=document.getElementById('homeStats').value;
+const as=document.getElementById('awayStats').value;
+const odds=document.getElementById('odds').value;
+
+let homePower=50;
+let awayPower=50;
+
+if(hs) homePower+=10;
+if(as) awayPower+=10;
+
+if(odds){
+const numbers=odds.match(/\d+(\.\d+)?/g);
+if(numbers && numbers.length>=3){
+const h=Number(numbers[0]);
+const a=Number(numbers[2]);
+if(h>1 && a>1){
+homePower+=Math.max(-15,Math.min(15,(a-h)*4));
+awayPower+=Math.max(-15,Math.min(15,(h-a)*4));
+}
+}
+}
+
+const total=homePower+awayPower;
+const hp=Math.round(homePower/total*100);
+const ap=100-hp;
+
+let ms=hp>55?'1':ap>55?'2':'X';
+let score=hp>60?'2-0':ap>60?'0-2':'1-1';
+
+document.getElementById('match').innerText=home+' - '+away;
+document.getElementById('ms').innerText=ms;
+document.getElementById('ht').innerText='1-0 / 0-0';
+document.getElementById('htms').innerText='1/1 veya X/1';
+document.getElementById('btts').innerText='Değerlendirme gerekli';
+document.getElementById('over').innerText='Değerlendirme gerekli';
+document.getElementById('score').innerText=score;
+document.getElementById('confidence').innerText='Düşük';
+
+document.getElementById('results').style.display='block';
+document.getElementById('status').innerText='Örnek yerel hesaplama tamamlandı.';
+document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+  </html>
+  
