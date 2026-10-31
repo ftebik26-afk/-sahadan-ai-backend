@@ -1,6 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAHADAN AI Futbol Analiz</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+padding:15px;
+background:#080d16;
+color:white;
+font-family:Arial,sans-serif;
+}
+
+.container{
+max-width:750px;
+margin:auto;
+}
+
+header{
+text-align:center;
+padding:22px 10px;
+border-bottom:2px solid #32d995;
+margin-bottom:20px;
+}
+
+.logo{
+font-size:29px;
+font-weight:bold;
+color:#32d995;
+}
+
+.subtitle{
+color:#9aa9bd;
+font-size:12px;
+margin-top:8px;
+}
+
+.card{
+background:#111c2b;
+border:1px solid #26394d;
+border-radius:13px;
+padding:16px;
+margin-bottom:15px;
+}
+
+h3{
+color:#32d995;
+margin-top:0;
+}
+
+input,textarea{
+width:100%;
+padding:13px;
+margin:7px 0;
+border-radius:8px;
+border:1px solid #34485e;
+background:#091321;
+color:white;
+font-size:14px;
+}
+
+textarea{
+min-height:85px;
+resize:vertical;
+}
+
+button{
+width:100%;
+padding:15px;
+border:0;
+border-radius:9px;
+background:#20bd82;
+color:#06150f;
+font-size:16px;
+font-weight:bold;
+margin-top:10px;
+}
+
+button:disabled{
+opacity:.5;
+}
+
+.secondary{
+background:#26394d;
+color:white;
+}
+
+.result{
+background:#091522;
+border:1px solid #26394d;
+padding:13px;
+border-radius:9px;
+margin:9px 0;
+}
+
+.value{
+color:#32d995;
+font-weight:bold;
+}
+
+.muted{
+color:#91a1b5;
+font-size:12px;
+line-height:1.6;
+}
+
+#status{
+color:#ffc85c;
+margin-top:12px;
+font-size:13px;
+}
+
+#results{
+display:none;
+}
+
+#analysisText{
+white-space:pre-wrap;
+line-height:1.7;
+color:white;
+overflow-wrap:anywhere;
+}
+
+.footer{
+text-align:center;
+color:#64758b;
+font-size:12px;
+padding:20px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+<div class="logo">⚽ SAHADAN AI</div>
+<div class="subtitle">
+PROFESYONEL FUTBOL MAÇ ANALİZ VE SİMÜLASYON
+</div>
+</header>
+
+<div class="card">
+<h3>⚽ MAÇ BİLGİLERİ</h3>
+
+<input id="home" placeholder="Ev sahibi takım">
+<input id="away" placeholder="Deplasman takımı">
+
+<input id="matchUrl"
+placeholder="NOWGOAL / SAHADAN maç bağlantısı">
+
+<button id="analyzeBtn" onclick="analyze()">
+ANALİZ ET
+</button>
+
+<div id="status">Analiz için iki takımın adını gir.</div>
+</div>
+
+<div class="card">
+<h3>📊 VERİ GİRİŞİ</h3>
+
+<p class="muted">
+Maç istatistiklerini, oranları ve takım bilgilerini girebilirsin.
+</p>
+
+<textarea id="homeStats"
+placeholder="Ev sahibi takım istatistikleri"></textarea>
+
+<textarea id="awayStats"
+placeholder="Deplasman takım istatistikleri"></textarea>
+
+<textarea id="odds"
+placeholder="MS 1/X/2, İY oranları, Alt/Üst oranları"></textarea>
+
+<textarea id="form"
+placeholder="Son maçlar, takım formu, iç saha ve deplasman performansı"></textarea>
+
+<textarea id="players"
+placeholder="Kadro, sakatlıklar, cezalılar ve oyuncu istatistikleri"></textarea>
+
+<textarea id="extra"
+placeholder="Korner, kart, penaltı ve diğer maç verileri"></textarea>
+</div>
+
 <div id="results" class="card">
-  <h3>🧠 AI MAÇ ANALİZ SONUÇLARI</h3>
-  <div id="analysisText" class="result">
-    Analiz sonucu burada gösterilecek.
-  </div>
-</div> 
+<h3>🧠 AI MAÇ ANALİZ SONUÇLARI</h3>
+
+<div class="result">
+<div class="muted">MAÇ</div>
+<div id="match" class="value"></div>
+</div>
+
+<div class="result">
+<div class="muted">YAPAY ZEKA ANALİZİ</div>
+<div id="analysisText"></div>
+</div>
+</div>
+
+<div class="card">
+<h3>🌐 VERİ KAYNAKLARI</h3>
+
+<button class="secondary"
+onclick="openSite('https://www.nowgoal.com/')">
+NOWGOAL
+</button>
+
+<button class="secondary"
+onclick="openSite('https://www.sahadan.com/')">
+SAHADAN
+</button>
+</div>
+
+<div class="footer">
+SAHADAN AI © 2026<br>
+İstatistiksel tahminler kesin sonuç garantisi vermez.
+</div>
+
+</div>
+
+<script>
+
+// RENDER BACKEND ADRESİ
+const BACKEND_URL =
+"https://sahadan-ai-backend.onrender.com";
+
+function openSite(url){
+window.open(url,"_blank");
+}
+
+async function analyze(){
+
+const home =
+document.getElementById("home").value.trim();
+
+const away =
+document.getElementById("away").value.trim();
+
+const matchUrl =
+document.getElementById("matchUrl").value.trim();
+
+const btn =
+document.getElementById("analyzeBtn");
+
+const status =
+document.getElementById("status");
+
+const results =
+document.getElementById("results");
+
+const output =
+document.getElementById("analysisText");
+
+if(!home || !away){
+alert("Lütfen iki takımın adını gir.");
+return;
+}
+
+const payload = {
+home:home,
+away:away,
+matchUrl:matchUrl,
+homeStats:document.getElementById("homeStats").value,
+awayStats:document.getElementById("awayStats").value,
+odds:document.getElementById("odds").value,
+form:document.getElementById("form").value,
+players:document.getElementById("players").value,
+extra:document.getElementById("extra").value
+};
+
+btn.disabled=true;
+btn.innerText="AI ANALİZ EDİYOR...";
+
+status.innerText="Backend sunucusuna bağlanılıyor...";
+results.style.display="block";
+
+output.innerText=
+"Yapay zeka analizi bekleniyor...";
+
+try{
+
+const controller = new AbortController();
+
+const timeout = setTimeout(
+()=>controller.abort(),90000
+);
+
+let response;
+
+try{
+
+response=await fetch(
+BACKEND_URL+"/api/analyze",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(payload),
+signal:controller.signal
+}
+);
+
+}finally{
+clearTimeout(timeout);
+}
+
+const data=await response.json();
+
+if(!response.ok){
+throw new Error(
+data.error || data.message ||
+"Sunucu hatası: "+response.status
+);
+}
+
+const analysis =
+data.analysis ||
+data.result ||
+data.output ||
+data.message;
+
+if(!analysis){
+throw new Error(
+"Sunucu yanıt verdi ancak analiz metni bulunamadı."
+);
+}
+
+output.innerText =
+typeof analysis==="string"
+? analysis
+: JSON.stringify(analysis,null,2);
+
+status.innerText=
+"AI analizi başarıyla tamamlandı.";
+
+results.scrollIntoView({
+behavior:"smooth"
+});
+
+}catch(error){
+
+let message=error.message;
+
+if(error.name==="AbortError"){
+message="Sunucu yanıt süresi aşıldı.";
+}
+
+if(message.includes("Failed to fetch")){
+message="Backend bağlantısı kurulamadı. Sunucu veya CORS ayarlarını kontrol et.";
+}
+
+output.innerText=
+"ANALİZ HATASI\n\n"+message;
+
+status.innerText=
+"Analiz tamamlanamadı.";
+
+}finally{
+
+btn.disabled=false;
+btn.innerText="ANALİZ ET";
+
+}
+
+}
+
+</script>
+</body>
+</html>
